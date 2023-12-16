@@ -9,7 +9,7 @@ import { TaskService } from 'src/app/Services/task.service';
 import { UserService } from 'src/app/Services/user.service';
 import { UserGetDTO } from 'src/app/modules/auth';
 import { AttachmentGetDTO } from 'src/app/DTOs/AttachmentDTO';
-import { atLeastOneFieldValidator } from 'src/app/utils/validator';
+import { atLeastOneFieldValidator, noNegativeTimeValidator } from 'src/app/utils/validator';
 import { MAXWORKHOUR } from 'src/app/utils/const';
 import { DateFormatter } from 'src/app/utils/DateConverter';
 import { ToastAlertService } from 'src/app/Services/toast-alert.service';
@@ -129,7 +129,7 @@ export class CreateTaskFormComponent implements OnInit{
       day: [],
       hour: [],
       minute: [],
-    }, { validators: atLeastOneFieldValidator });
+    }, { validators: [atLeastOneFieldValidator, noNegativeTimeValidator]});
   }
 
   get projectID(){

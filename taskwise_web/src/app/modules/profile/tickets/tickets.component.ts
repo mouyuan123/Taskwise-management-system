@@ -1,3 +1,4 @@
+// REMOVE ANY REDUNDANT CODES
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { CreateTicketFormComponent } from 'src/app/form-modal/ticket/create-ticket-form.component';
@@ -5,10 +6,9 @@ import { Observable } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 import { PaginateGetDTO } from 'src/app/DTOs/PaginateGetDTO';
 import { TicketService } from 'src/app/Services/ticket.service';
-import { AuthService, UserGetDTO } from '../../auth';
+import { AuthService } from '../../auth';
 import { TicketGetDTO } from 'src/app/DTOs/TicketDTO';
 import { TICKET_STATUS } from 'src/app/utils/const';
-import { ProjectService } from 'src/app/Services/project.service';
 import { UserService } from 'src/app/Services/user.service';
 
 @Component({
@@ -27,8 +27,8 @@ export class TicketsComponent implements OnInit {
   //* Tickets to be displayed to clients
   displayedTickets: TicketGetDTO[] = [];
   //* To sort the ticket based on "Pending / On Hold / Completed"
-  TICKET_STATUS = TICKET_STATUS;
-  selectedStatus: String = "All";
+  sort_options: string[] = ["All", TICKET_STATUS.PENDING, TICKET_STATUS.REOPENED, TICKET_STATUS.SOLVED];
+  selectedStatus: String = this.sort_options[0];
   currentDate: Date;
   //* Pagination 
   pagination: PaginateGetDTO; // To check the pagination details 
@@ -44,9 +44,8 @@ export class TicketsComponent implements OnInit {
   (
     private dialogService: DialogService,
     private ticketService: TicketService,
-    private projectService: ProjectService,
     private userService: UserService,
-    private authService: AuthService,
+    public authService: AuthService,
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
@@ -72,29 +71,11 @@ export class TicketsComponent implements OnInit {
   }
 
   async loadData(): Promise<void>{
-    //* 1. Get ticket list based on user roles
-    
-    //* IF user.role == "CLIENT || ENGINEER", load their own tickets at "tickets" page
-    if(this.isClient() || this.isEngineer()) this.pagination = await this.ticketService.getClientAndEngineerPaginateTicket(this.authService.currentUserValue._id, this.page, this.limit);
-    //* IF user.role == "MANAGER", load ALL tickets at "tickets" page
-    else this.pagination = await this.ticketService.getPaginateTicket(this.page, this.limit);
+    //* 1. Get ticket list based on user roles (deals in backend)
+    this.pagination = await this.ticketService.getPaginateTicket(this.page, this.limit);
 
     if(this.pagination){
       this.paginateTicket = this.pagination['docs'] as TicketGetDTO[];
-      
-      this.isLoadingPro = true;
-      for(const ticket of this.paginateTicket){
-        //* 2. Get the project's name of each ticket
-        const { name } = await this.projectService.getProjectNameAndLeader(ticket.project_id);
-        ticket.project_name = name;
-
-        //* 3 Load the client details (For "MANAGER && ENGINEER")
-        if(!this.isClient()){
-          const client: UserGetDTO = await this.userService.getUserById(ticket.client_id);
-          ticket.client = client;
-        }
-      }
-      this.isLoadingPro = false;
       
       this.sortTicketByStatus(this.selectedStatus);
       this.cdr.detectChanges();
@@ -110,6 +91,7 @@ export class TicketsComponent implements OnInit {
   }
 
   sortTicketByStatus($event): void{
+    this.selectedStatus = $event;
     if($event == "All"){
       this.displayedTickets = this.paginateTicket.filter((ticket: TicketGetDTO) => ticket.status != $event);
     }
@@ -147,9 +129,5 @@ export class TicketsComponent implements OnInit {
         state: { ticket: ticket }
       },
     );
-  }
-
-  isClient(): boolean { return this.authService.isClient(); }
-  isEngineer(): boolean { return this.authService.isEngineer(); }
-  
+  }  
 }

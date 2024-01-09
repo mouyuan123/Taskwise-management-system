@@ -23,6 +23,8 @@ const { job } = require('./utils/job-schedule');
 
 var corsOptions = { origin: true };
 
+// imports isAuthorized function from the './utils/middleware' module
+const { isAuthorized } = require('./utils/middleware');
 
 // Middleware
 app.use(cors(corsOptions));
@@ -37,7 +39,7 @@ app.use('/project', require('./routes/project.route'));
 app.use('/attachment', require('./routes/attachment.route'));
 app.use('/task', require('./routes/task.route'));
 app.use('/user', require('./routes/user.route'));
-app.use('/ticket', irequire('./routes/ticket.route'));
+app.use('/ticket', require('./routes/ticket.route'));
 app.use('/notification', require('./routes/notification.route'));
 app.use('/dashboard', require('./routes/dashboard.route'));
 app.use('/chat', require('./routes/chat.route'));

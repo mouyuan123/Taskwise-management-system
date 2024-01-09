@@ -4,11 +4,8 @@ import { DialogService } from 'primeng/dynamicdialog';
 import { DateFormatter } from '../DateConverter';
 import { PaginateGetDTO } from 'src/app/DTOs/PaginateGetDTO';
 import { TaskDashboardDTO, TaskGetDTO } from 'src/app/DTOs/TaskDTO';
-import { UserGetDTO } from 'src/app/modules/auth';
 import { TaskService } from 'src/app/Services/task.service';
-import { AuthService } from 'src/app/modules/auth';
 import { STATUS, PRIORITY } from '../const';
-import { UserService } from 'src/app/Services/user.service';
 
 @Component({
   selector: 'app-task-table',
@@ -38,8 +35,6 @@ export class TaskTableComponent implements OnInit {
   constructor
   (
     private taskService: TaskService,
-    private authService: AuthService,
-    private userService: UserService,
     private router: Router,
     private route: ActivatedRoute,
     private cdr: ChangeDetectorRef
@@ -58,13 +53,14 @@ export class TaskTableComponent implements OnInit {
 
   async loadData(): Promise<void>{
     this.isLoading = true;
-
-    // IF user.role == "ENGINEER"
-    if(this.isEngineer()) this.pagination = await this.taskService.getEngineerPaginateTask(this.authService.currentUserValue._id, this.page, this.limit);
-    // IF user.role == "CLIENT"
-    else if(this.isClient() || this.isNavigatingFromProject()) this.pagination = await this.taskService.getProjectPaginateTask(this.project_id, this.page, this.limit);
-    // IF user.role == "MANAGER"
-    else this.pagination = await this.taskService.getPaginateTask(this.page, this.limit);
+    //? For "MANAGER" && "ENGINEER"
+    if(!this.isNavigatingFromProject()){
+      this.pagination = await this.taskService.getPaginateTask(this.page, this.limit);
+    }
+    //? Viewing task list at "Project-Details"
+    else if(this.isNavigatingFromProject()){
+      this.pagination = await this.taskService.getProjectPaginateTask(this.project_id, this.page, this.limit);
+    }
 
     if(this.pagination){
       this.paginateTask = [];
@@ -78,18 +74,9 @@ export class TaskTableComponent implements OnInit {
           status: task.status,
           priority: task.priority,
           selectedLeaderID: task.selectedLeaderID,
-          selectedEngineersID: task.selectedEngineersID
-        }
-
-        //? Load the details of engineers for "CLIENT" site
-        if(this.isNavigatingFromProject()){
-          dashboardTask.selectedLeader = await this.userService.getUserById(dashboardTask.selectedLeaderID);
-
-          dashboardTask.selectedEngineers = [];
-          for(const engineer_id of dashboardTask?.selectedEngineersID){
-            const engineer: UserGetDTO = await this.userService.getUserById(engineer_id);
-            dashboardTask.selectedEngineers.push(engineer);
-          }
+          selectedEngineersID: task.selectedEngineersID,
+          selectedLeader: this.isNavigatingFromProject() ? task.selectedLeader : undefined,
+          selectedEngineers: this.isNavigatingFromProject() ? task.selectedEngineers : [],
         }
 
         this.paginateTask.push(dashboardTask);
@@ -110,8 +97,4 @@ export class TaskTableComponent implements OnInit {
   }
 
   isNavigatingFromProject(): boolean{ return this.navigationPage == "Project" }
-
-  isEngineer(): boolean{ return this.authService.isEngineer(); }
-  isClient(): boolean{ return this.authService.isClient(); }
-
 }

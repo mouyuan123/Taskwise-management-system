@@ -26,7 +26,8 @@ export class ProjectsComponent implements OnInit {
   //* Projects to be displayed to users
   displayedProjects: ProjectGetDTO[] = [];
   //* To sort the project based on "Pending / On Hold / Completed"
-  selectedStatus: String = "All";
+  sort_options: string[] = ["All", STATUS.PENDING, STATUS.ONHOLD, STATUS.COMPLETED];
+  selectedStatus: string = this.sort_options[0];
   currentDate: Date;
   //* Pagination 
   pagination: PaginateGetDTO; // To check the pagination details 
@@ -69,11 +70,8 @@ export class ProjectsComponent implements OnInit {
   }
 
   async loadData(): Promise<void>{
-    //* 1. Get ticket list based on user roles
-    //* IF user.role == "CLIENT || ENGINEER"
-    if(this.authService.isClient() || this.authService.isEngineer()) this.pagination = await this.projectService.getClientAndEngineerPaginateProject(this.authService.currentUserValue._id, this.page, this.limit);
-    //* IF user.role == "MANAGER"
-    else this.pagination = await this.projectService.getPaginateProject(this.page, this.limit);
+    //* Access different format of data based on the roles (backend)
+    this.pagination = await this.projectService.getPaginateProject(this.page, this.limit);
 
     if(this.pagination){
       //* Parse the result
@@ -83,19 +81,6 @@ export class ProjectsComponent implements OnInit {
         //* Track the total number of "Task" and "Ticket" of each project
         project.numOfTask = await this.taskService.getProjectTaskNum(project._id);
         project.numOfTicket = await this.ticketService.getProjectTicketNum(project._id);
-
-        // Update project's status (if necessary)
-        let status: string = project.status;
-        if(project?.numOfTask.numOfTasks != 0 || project?.numOfTicket.numOfTickets != 0){
-          if(project?.numOfTask.numOfTasks == project?.numOfTask.numOfCompletedTasks && project?.numOfTicket.numOfTickets == 0) status = STATUS.COMPLETED
-          else if(project?.numOfTask.numOfTasks == project?.numOfTask?.numOfCompletedTasks && project?.numOfTicket?.numOfTickets == project?.numOfTicket?.numOfSolvedTickets) status == STATUS.COMPLETED;
-          else status = project.status == STATUS.ONHOLD ? STATUS.ONHOLD : STATUS.PENDING;
-        }
-
-        if(status !=  project.status){
-          const result = await this.projectService.updateProjectStatus(project._id, status);
-          if(result) project.status = status;
-        }
       }
       this.sortProjectByStatus(this.selectedStatus);
     }
@@ -110,6 +95,7 @@ export class ProjectsComponent implements OnInit {
   }
 
   sortProjectByStatus($event): void{
+    this.selectedStatus = $event;
     if($event == "All"){
       this.displayedProjects = this.paginateProject.filter((project: ProjectGetDTO) => project.status != $event);
     }

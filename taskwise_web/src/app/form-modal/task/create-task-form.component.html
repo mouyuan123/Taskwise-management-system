@@ -34,6 +34,8 @@
                             <span class="d-flex justify-content-center align-items-center"><input class="form-control form-control-lg form-control-solid" formControlName="hour" type="number" min="0" name="hour"/><span class="mx-2">hour</span></span>
                             <span class="d-flex justify-content-center align-items-center"><input class="form-control form-control-lg form-control-solid" formControlName="minute" type="number" min="0" max="59" name="minute"/><span class="mx-2">minute</span></span>    
                         </div>
+                        <span *ngIf="taskForm.dirty && taskForm.hasError('negativeTimeValue')" class="error_message">*Time cannot have negative
+                            value</span>
                     </div>
                 </div>
 

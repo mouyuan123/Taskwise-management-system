@@ -10,6 +10,7 @@ router.post('/register', [userController.register]);
 //* When an user send request to "/login" endpoint, userController.login is used to handle its request-response
 router.post('/login', userController.login);
 router.get('/info/:id', [userController.getInfo]);
+
 // To retrieve the "profile" in FormData using "multer"
 router.put('/update/:id', [upload.single('file'), userController.updateUser]);
 // To update engineer's details (performance prediction) by "MANAGER"

@@ -4,13 +4,13 @@ const router = require('express').Router();
 const userController = require('../controllers/user.controller');
 const upload = require('../utils/multer');
 const middleware = require('../utils/middleware');
-const { isAuthorized } = require('../utils/middleware');
 
 //For Angular
-router.post('/register', userController.register);
+router.post('/register', [userController.register]);
 //* When an user send request to "/login" endpoint, userController.login is used to handle its request-response
 router.post('/login', userController.login);
-router.get('/info/:id', userController.getInfo);
+router.get('/info/:id', [userController.getInfo]);
+
 // To retrieve the "profile" in FormData using "multer"
 router.put('/update/:id', [upload.single('file'), userController.updateUser]);
 // To update engineer's details (performance prediction) by "MANAGER"
